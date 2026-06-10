@@ -12,6 +12,12 @@
   .brand{font-size:18px;font-weight:900;color:var(--green-dark);letter-spacing:.5px;}
   .brand .sub{font-size:12px;font-weight:700;color:var(--muted);margin-left:8px;}
   .who{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:var(--green-dark);background:var(--green-light);border:1.5px solid #cfe9d8;border-radius:999px;padding:6px 13px;}
+  .backbtn{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:800;color:var(--green-dark);background:#fff;border:1.5px solid #cfe9d8;border-radius:999px;padding:7px 14px;text-decoration:none;cursor:pointer;}
+  .backbtn:hover{background:var(--green-light);}
+  .brand-logo{display:flex;align-items:center;gap:9px;}
+  .brand-txt{line-height:1.05;}
+  .brand-name{display:block;font-size:17px;font-weight:900;color:var(--green-dark);letter-spacing:.5px;}
+  .brand-sub{display:block;font-size:11px;font-weight:700;color:var(--muted);}
   .wrap{max-width:980px;margin:0 auto;padding:16px 16px 0;}
   .tabs{display:flex;gap:8px;margin-bottom:16px;}
   .tab{flex:1;padding:11px;border:1.5px solid var(--line);background:#fff;border-radius:12px;font-size:14px;font-weight:800;color:var(--muted);cursor:pointer;font-family:inherit;}
@@ -50,7 +56,14 @@
 </head>
 <body>
 <header>
-  <div class="brand">ANEW<span class="sub">備品発注</span></div>
+  <a class="backbtn" href="https://anew-shift.vercel.app/">← ANEWアプリに戻る</a>
+  <div class="brand-logo">
+    <svg width="30" height="30" viewBox="0 0 60 58" aria-hidden="true" style="display:block">
+      <path d="M30 4 L56 52 L4 52 Z" fill="none" stroke="#16A34A" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M34 26 L46 48 L22 48 Z" fill="none" stroke="#16A34A" stroke-width="3.5" stroke-linejoin="round"/>
+    </svg>
+    <div class="brand-txt"><span class="brand-name">ANEW</span><span class="brand-sub">備品発注</span></div>
+  </div>
   <div class="who" id="who">👤 ゲスト</div>
 </header>
 
@@ -134,13 +147,18 @@ let rows = [];   // 発注データ
 let editId = null;
 let dest = 'anew';   // 書き込み先：anew=ANEW / gf=GF（古着）/ frontier=フロンティア
 const DESTNAME = { anew:'ANEW', gf:'GF（古着）', frontier:'フロンティア' };
+const DESTCOLOR = { anew:'#16A34A', gf:'#1E3A8A', frontier:'#EA580C' }; // ANEW緑 / GFネイビー / フロンティアオレンジ
+const DESTBTN = { anew:'destAnew', gf:'destGf', frontier:'destFr' };
 function setDest(d){
   dest = d;
-  document.getElementById('destAnew').classList.toggle('active', d==='anew');
-  document.getElementById('destGf').classList.toggle('active', d==='gf');
-  document.getElementById('destFr').classList.toggle('active', d==='frontier');
+  Object.keys(DESTBTN).forEach(k=>{
+    const b=document.getElementById(DESTBTN[k]);
+    if(k===d){ b.classList.add('active'); b.style.background=DESTCOLOR[d]; b.style.borderColor=DESTCOLOR[d]; b.style.color='#fff'; b.style.boxShadow='0 3px 10px '+DESTCOLOR[d]+'33'; }
+    else { b.classList.remove('active'); b.style.background='#fff'; b.style.borderColor='#dde4df'; b.style.color='#7c8a83'; b.style.boxShadow='none'; }
+  });
   if(document.getElementById('paneList').style.display!=='none') loadList();
 }
+setDest('anew'); // 初期はANEW（緑）を選択状態に
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
 function showTab(t){
@@ -227,7 +245,7 @@ async function loadList(){
   }).join('');
 }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function fmtDate(v){ if(!v) return ''; const s=String(v); const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? (Number(m[2])+'/'+Number(m[3])) : s; }
+function fmtDate(v){ if(!v) return ''; const s=String(v); if(s.indexOf('T')>=0){ const d=new Date(s); if(!isNaN(d)) return (d.getMonth()+1)+'/'+d.getDate(); } const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? (Number(m[2])+'/'+Number(m[3])) : s; }
 
 function openOrder(id){
   const r=rows.find(x=>String(x.id)===String(id)); if(!r)return; editId=id;
