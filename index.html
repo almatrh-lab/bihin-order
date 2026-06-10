@@ -63,12 +63,16 @@
   <!-- 依頼フォーム -->
   <div id="paneReq">
     <div class="card">
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button type="button" class="tab active" id="destAnew" onclick="setDest('anew')">ANEW</button>
+        <button type="button" class="tab" id="destGf" onclick="setDest('gf')">GF（古着）</button>
+        <button type="button" class="tab" id="destFr" onclick="setDest('frontier')">フロンティア</button>
+      </div>
       <div class="grid">
         <div><label>依頼日</label><input id="f_reqdate" readonly></div>
         <div><label>依頼者</label><input id="f_requester" readonly></div>
         <div class="full"><label>品目 <span class="req">*</span></label><input id="f_item" placeholder="例：宅配袋 A4サイズ"></div>
         <div><label>品番 / JAN</label><input id="f_code" placeholder="例：4901234567890"></div>
-        <div><label>発注先</label><input id="f_vendor" placeholder="例：アスクル"></div>
         <div><label>サイズ</label><input id="f_size" placeholder="例：A4 / L"></div>
         <div><label>カラー</label><input id="f_color" placeholder="例：クラフト"></div>
         <div><label>発注ロット（1ロットの入数）</label><input id="f_lot" type="number" min="0" placeholder="例：100"></div>
@@ -91,21 +95,18 @@
   </div>
 </div>
 
-<!-- 発注処理モーダル -->
+<!-- 発注処理モーダル（発注者が記入。保存するとシートがグレーアウト） -->
 <div class="overlay" id="ov">
   <div class="modal">
-    <h3>発注処理</h3>
+    <h3>発注処理（発注者が記入）</h3>
     <div class="grid">
+      <div class="full"><label>発注先</label><input id="m_vendor" placeholder="例：アスクル"></div>
       <div><label>発注金額（円）</label><input id="m_amount" type="number" min="0"></div>
       <div><label>発注日</label><input id="m_orderdate" type="date"></div>
-      <div><label>発注者</label><input id="m_orderer"></div>
-      <div><label>到着日</label><input id="m_arrival" type="date"></div>
-      <div class="full"><label>状態</label>
-        <select id="m_status"><option value="依頼">依頼（未発注）</option><option value="発注済">発注済</option><option value="到着済">到着済</option></select>
-      </div>
+      <div class="full"><label>発注者</label><input id="m_orderer"></div>
     </div>
     <div class="actions">
-      <button class="btn" id="m_save" onclick="saveOrder()">保存</button>
+      <button class="btn" id="m_save" onclick="saveOrder()">発注完了として保存</button>
       <button class="btn gray" onclick="closeModal()">キャンセル</button>
     </div>
   </div>
@@ -115,7 +116,7 @@
 
 <script>
 /* ====== 設定：GAS をデプロイしたら下の GAS_URL に /exec を貼ってください ====== */
-const GAS_URL = ""; // 例: "https://script.google.com/macros/s/XXXX/exec"
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwZ_5IRh5GKeZo46qj380--VwU9Gco5dPC4u03Aos_bB6ALOrJNzgxT6_Ne4M6ioubGYw/exec";
 
 /* ログイン情報（ANEWアプリから ?name=&uid= で渡される） */
 const params = new URLSearchParams(location.search);
@@ -131,6 +132,16 @@ document.getElementById('f_requester').value = ME_NAME || '（アプリから開
 
 let rows = [];   // 発注データ
 let editId = null;
+let dest = 'anew';   // 書き込み先：anew=ANEW / gf=GF（古着）/ frontier=フロンティア
+const DESTNAME = { anew:'ANEW', gf:'GF（古着）', frontier:'フロンティア' };
+function setDest(d){
+  dest = d;
+  document.getElementById('destAnew').classList.toggle('active', d==='anew');
+  document.getElementById('destGf').classList.toggle('active', d==='gf');
+  document.getElementById('destFr').classList.toggle('active', d==='frontier');
+  if(document.getElementById('paneList').style.display!=='none') loadList();
+}
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
 function showTab(t){
   document.getElementById('tabReq').classList.toggle('active', t==='req');
@@ -140,20 +151,18 @@ function showTab(t){
   if(t==='list') loadList();
 }
 
-/* ===== 保存先：GAS があればサーバー、無ければこのブラウザに仮保存 ===== */
+/* ===== GAS通信（読み：GET / 書き：POST。書き込み後はGETで再読込して反映） ===== */
 async function apiLoad(){
-  if(GAS_URL){ try{ const r=await fetch(GAS_URL+'?action=load'); const d=await r.json(); return Array.isArray(d.rows)?d.rows:[]; }catch(e){ return localLoad(); } }
-  return localLoad();
+  if(!GAS_URL) return [];
+  try{ const r=await fetch(GAS_URL+'?dest='+dest+'&t='+Date.now()); const d=await r.json(); return Array.isArray(d.rows)?d.rows:[]; }catch(e){ return []; }
 }
-async function apiSave(row){
-  if(GAS_URL){ try{ await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(row)}); }catch(e){} }
-  // ローカルにも常に反映（オフライン保険）
-  const arr=localLoad(); const i=arr.findIndex(x=>x.id===row.id); if(i>=0)arr[i]=row; else arr.unshift(row); localStorage.setItem('anew_po', JSON.stringify(arr));
+async function apiPost(body){
+  if(!GAS_URL) return;
+  try{ await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}); }catch(e){}
 }
-function localLoad(){ try{ return JSON.parse(localStorage.getItem('anew_po')||'[]'); }catch(e){ return []; } }
 
 function clearForm(){
-  ['f_item','f_code','f_vendor','f_size','f_color','f_lot','f_lotprice','f_lotqty','f_url','f_note'].forEach(id=>document.getElementById(id).value='');
+  ['f_item','f_code','f_size','f_color','f_lot','f_lotprice','f_lotqty','f_url','f_note'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f_reqdate').value = todayStr();
 }
 
@@ -162,8 +171,8 @@ async function submitReq(){
   if(!item){ toast('品目を入力してください'); return; }
   if(!ME_NAME){ if(!confirm('依頼者が未設定です。ゲストとして依頼しますか？\n（ANEWアプリから開くと自動で名前が入ります）')) return; }
   const btn=document.getElementById('submitBtn'); btn.disabled=true;
-  const row={
-    id:genId(), created_at:new Date().toISOString(), status:'依頼',
+  const body={
+    action:'create', dest:dest, id:genId(),
     reqdate:document.getElementById('f_reqdate').value,
     item:item,
     code:document.getElementById('f_code').value.trim(),
@@ -172,64 +181,79 @@ async function submitReq(){
     lot:document.getElementById('f_lot').value,
     lotprice:document.getElementById('f_lotprice').value,
     lotqty:document.getElementById('f_lotqty').value,
-    requester:ME_NAME||'ゲスト', requester_uid:ME_UID,
-    vendor:document.getElementById('f_vendor').value.trim(),
-    amount:'', orderdate:'', orderer:'', arrival:'',
+    requester:ME_NAME||'ゲスト',
     note:document.getElementById('f_note').value.trim(),
     url:document.getElementById('f_url').value.trim()
   };
-  await apiSave(row);
-  btn.disabled=false; clearForm(); toast('発注を依頼しました！'); showTab('list');
+  await apiPost(body);
+  btn.disabled=false; clearForm(); toast('「'+DESTNAME[dest]+'」に発注を依頼しました！');
+  await sleep(800); showTab('list');
 }
 
 function n(v){ return (v===''||v==null)?0:Number(v)||0; }
 function estAmount(r){ const a=n(r.lotprice)*n(r.lotqty); return a?('概算 '+a.toLocaleString()+'円'):''; }
-function badge(s){ if(s==='到着済')return '<span class="badge b-arr">到着済</span>'; if(s==='発注済')return '<span class="badge b-ord">発注済</span>'; return '<span class="badge b-req">依頼（未発注）</span>'; }
+function badge(s){ if(s==='到着済')return '<span class="badge b-arr">到着済 ✓</span>'; if(s==='発注済')return '<span class="badge b-ord">発注済（到着待ち）</span>'; return '<span class="badge b-req">依頼（未発注）</span>'; }
 
 async function loadList(){
-  document.getElementById('srvNotice').style.display = GAS_URL?'none':'';
-  if(!GAS_URL) document.getElementById('srvNotice').textContent = '※ まだサーバー（GAS）未接続のため、このブラウザ内に仮保存中です。GAS_URL を設定すると全員で共有されます。';
+  const note = document.getElementById('srvNotice'); note.style.display='';
+  note.textContent = '「'+DESTNAME[dest]+'」の現在の期間タブの内容です。依頼 → 発注処理 → 受取通知 の順に進みます。受取通知をすると到着日が記録されます。';
+  const box=document.getElementById('listBox'); box.innerHTML='<div class="empty">読み込み中…</div>';
   rows = await apiLoad();
-  const box=document.getElementById('listBox');
   if(!rows.length){ box.innerHTML='<div class="empty">まだ発注依頼はありません。</div>'; return; }
-  box.innerHTML = rows.map(r=>`
-    <div class="card">
-      <div class="row-head">${badge(r.status)}<div class="row-title">${esc(r.item)}</div><div style="margin-left:auto;font-size:12px;color:#7c8a83">${esc(r.reqdate||'')}</div></div>
+  box.innerHTML = rows.map(r=>{
+    const canOrder = r.id && r.status==='依頼';
+    const canReceive = r.id && r.status==='発注済';
+    let act='';
+    if(canOrder) act=`<button class="btn ghost" onclick="openOrder('${esc(r.id)}')">発注処理</button>`;
+    else if(canReceive) act=`<button class="btn" onclick="receive('${esc(r.id)}')">受け取りました（受取通知）</button>`;
+    const dim = (r.status==='発注済'||r.status==='到着済');
+    return `
+    <div class="card"${dim?' style="background:#f3f5f4"':''}>
+      <div class="row-head">${badge(r.status)}<div class="row-title">${esc(r.item)}</div><div style="margin-left:auto;font-size:12px;color:#7c8a83">${esc(fmtDate(r.reqdate))}</div></div>
       <div class="kv">
         <b>依頼者</b><span>${esc(r.requester||'')}</span>
         <b>品番/JAN</b><span>${esc(r.code||'-')}</span>
         <b>サイズ/カラー</b><span>${esc(r.size||'-')} / ${esc(r.color||'-')}</span>
         <b>ロット</b><span>${esc(r.lot||'-')}入 × 希望${esc(r.lotqty||'-')}ロット（1ロット ${r.lotprice?Number(r.lotprice).toLocaleString()+'円':'-'}）　${estAmount(r)}</span>
-        <b>発注先</b><span>${esc(r.vendor||'-')}</span>
+        ${r.vendor?`<b>発注先</b><span>${esc(r.vendor)}</span>`:''}
         ${r.url?`<b>URL</b><span><a href="${esc(r.url)}" target="_blank" rel="noopener">リンク</a></span>`:''}
         ${r.amount?`<b>発注金額</b><span>${Number(r.amount).toLocaleString()}円</span>`:''}
-        ${r.orderdate?`<b>発注日/発注者</b><span>${esc(r.orderdate)} / ${esc(r.orderer||'-')}</span>`:''}
-        ${r.arrival?`<b>到着日</b><span>${esc(r.arrival)}</span>`:''}
+        ${r.orderdate?`<b>発注日/発注者</b><span>${esc(fmtDate(r.orderdate))} / ${esc(r.orderer||'-')}</span>`:''}
+        ${r.arrival?`<b>到着日</b><span>${esc(fmtDate(r.arrival))}</span>`:''}
         ${r.note?`<b>備考</b><span>${esc(r.note)}</span>`:''}
       </div>
-      <div class="actions"><button class="btn ghost" onclick="openOrder('${r.id}')">発注処理 / 更新</button></div>
-    </div>`).join('');
+      ${act?`<div class="actions">${act}</div>`:''}
+    </div>`;
+  }).join('');
 }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(v){ if(!v) return ''; const s=String(v); const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? (Number(m[2])+'/'+Number(m[3])) : s; }
 
 function openOrder(id){
-  const r=rows.find(x=>x.id===id); if(!r)return; editId=id;
+  const r=rows.find(x=>String(x.id)===String(id)); if(!r)return; editId=id;
+  document.getElementById('m_vendor').value=r.vendor||'';
   document.getElementById('m_amount').value=r.amount||'';
-  document.getElementById('m_orderdate').value=r.orderdate||'';
+  document.getElementById('m_orderdate').value=(r.orderdate&&/^\d{4}-\d{2}-\d{2}/.test(r.orderdate))?r.orderdate.slice(0,10):todayStr();
   document.getElementById('m_orderer').value=r.orderer||ME_NAME||'';
-  document.getElementById('m_arrival').value=r.arrival||'';
-  document.getElementById('m_status').value=r.status||'依頼';
   document.getElementById('ov').classList.add('show');
 }
 function closeModal(){ document.getElementById('ov').classList.remove('show'); editId=null; }
 async function saveOrder(){
-  const r=rows.find(x=>x.id===editId); if(!r)return;
-  r.amount=document.getElementById('m_amount').value;
-  r.orderdate=document.getElementById('m_orderdate').value;
-  r.orderer=document.getElementById('m_orderer').value.trim();
-  r.arrival=document.getElementById('m_arrival').value;
-  r.status=document.getElementById('m_status').value;
-  await apiSave(r); closeModal(); toast('更新しました'); loadList();
+  if(!editId) return;
+  const btn=document.getElementById('m_save'); btn.disabled=true;
+  await apiPost({
+    action:'order', dest:dest, id:editId,
+    vendor:document.getElementById('m_vendor').value.trim(),
+    amount:document.getElementById('m_amount').value,
+    orderdate:document.getElementById('m_orderdate').value,
+    orderer:document.getElementById('m_orderer').value.trim()||ME_NAME
+  });
+  btn.disabled=false; closeModal(); toast('発注処理を保存しました'); await sleep(800); loadList();
+}
+async function receive(id){
+  if(!confirm('この備品を「受け取った」として通知します。よろしいですか？\n（到着日が今日になり、受取担当者として あなたの名前 が記録されます）')) return;
+  await apiPost({ action:'receive', dest:dest, id:id, receiver:ME_NAME||'（不明）', arrival:todayStr() });
+  toast('受取通知しました！ありがとうございます'); await sleep(800); loadList();
 }
 
 let tt; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),1900); }
