@@ -18,6 +18,7 @@
   .brand-divider{width:1px;height:22px;background:#e5e7eb;display:inline-block;}
   .brand-sub{font-size:12.5px;font-weight:800;color:var(--ink);}
   .wrap{max-width:980px;margin:0 auto;padding:16px 16px 0;}
+  .seclabel{font-size:11.5px;font-weight:800;color:var(--muted);margin:0 2px 6px;}
   .tabs{display:flex;gap:8px;margin-bottom:16px;}
   .tab{flex:1;padding:11px;border:1.5px solid var(--line);background:#fff;border-radius:12px;font-size:14px;font-weight:800;color:var(--muted);cursor:pointer;font-family:inherit;}
   .tab.active{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 3px 10px rgba(47,170,86,.22);}
@@ -45,6 +46,10 @@
   .kv b{color:var(--muted);font-weight:700;}
   .empty{text-align:center;color:var(--muted);padding:40px 0;font-size:14px;}
   .notice{font-size:12px;color:#92702a;background:#fdf6e3;border:1px solid #efe0b0;border-radius:10px;padding:9px 12px;margin-bottom:12px;}
+  .aibox{border:1.5px solid #cfe3f7;background:#f5faff;border-radius:16px;padding:16px;margin-bottom:14px;}
+  .aibox .row{display:flex;gap:8px;}
+  .aihint{font-size:11.5px;color:#6b7a86;margin-top:7px;}
+  .search{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;font-size:14px;font-family:inherit;margin-bottom:12px;}
   .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#1f2d28;color:#fff;font-size:13px;font-weight:700;padding:11px 20px;border-radius:999px;opacity:0;transition:.25s;z-index:50;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
   .overlay{position:fixed;inset:0;background:rgba(20,30,26,.45);display:none;align-items:center;justify-content:center;z-index:40;padding:18px;}
@@ -73,19 +78,24 @@
 </header>
 
 <div class="wrap">
+  <!-- 口座（振込元）区分：全タブ共通 -->
+  <div class="seclabel">振込元（口座）区分 ― 経理はここで区別します</div>
+  <div class="tabs" style="margin-bottom:14px;">
+    <button type="button" class="tab active" id="destAnew" onclick="setDest('anew')">ANEW</button>
+    <button type="button" class="tab" id="destGf" onclick="setDest('gf')">GF（古着）</button>
+    <button type="button" class="tab" id="destFr" onclick="setDest('frontier')">フロンティア</button>
+  </div>
+
+  <!-- メインタブ：依頼／状況／到着済み -->
   <div class="tabs">
     <button class="tab active" id="tabReq" onclick="showTab('req')">発注を依頼する</button>
     <button class="tab" id="tabList" onclick="showTab('list')">発注状況</button>
+    <button class="tab" id="tabArrived" onclick="showTab('arrived')">到着済み</button>
   </div>
 
   <!-- 依頼フォーム -->
   <div id="paneReq">
     <div class="card">
-      <div style="display:flex;gap:8px;margin-bottom:14px;">
-        <button type="button" class="tab active" id="destAnew" onclick="setDest('anew')">ANEW</button>
-        <button type="button" class="tab" id="destGf" onclick="setDest('gf')">GF（古着）</button>
-        <button type="button" class="tab" id="destFr" onclick="setDest('frontier')">フロンティア</button>
-      </div>
       <div class="grid">
         <div><label>依頼日</label><input id="f_reqdate" readonly></div>
         <div><label>依頼者</label><input id="f_requester" readonly></div>
@@ -106,10 +116,16 @@
     </div>
   </div>
 
-  <!-- 発注状況 -->
+  <!-- 発注状況（到着済み以外） -->
   <div id="paneList" style="display:none">
     <div class="notice" id="srvNotice" style="display:none"></div>
     <div id="listBox"></div>
+  </div>
+
+  <!-- 到着済み（過去ログ＋検索＋コピー） -->
+  <div id="paneArrived" style="display:none">
+    <input class="search" id="arrSearch" placeholder="🔍 キーワード検索（品目・品番・発注先・依頼者など）" oninput="renderArrived()">
+    <div id="arrivedBox"></div>
   </div>
 </div>
 
@@ -133,7 +149,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ====== 設定：GAS をデプロイしたら下の GAS_URL に /exec を貼ってください ====== */
+/* ====== 設定 ====== */
 const GAS_URL = "https://script.google.com/macros/s/AKfycbwZ_5IRh5GKeZo46qj380--VwU9Gco5dPC4u03Aos_bB6ALOrJNzgxT6_Ne4M6ioubGYw/exec";
 
 /* ログイン情報（ANEWアプリから ?name=&uid= で渡される） */
@@ -148,12 +164,13 @@ document.getElementById('who').textContent = '👤 ' + (ME_NAME || 'ゲスト');
 document.getElementById('f_reqdate').value = todayStr();
 document.getElementById('f_requester').value = ME_NAME || '（アプリから開くと自動入力）';
 
-let rows = [];   // 発注データ
+let rows = [];   // 現在の口座区分の発注データ
 let editId = null;
-let dest = 'anew';   // 書き込み先：anew=ANEW / gf=GF（古着）/ frontier=フロンティア
+let dest = 'anew';   // anew=ANEW / gf=GF（古着）/ frontier=フロンティア
 const DESTNAME = { anew:'ANEW', gf:'GF（古着）', frontier:'フロンティア' };
-const DESTCOLOR = { anew:'#16A34A', gf:'#1E3A8A', frontier:'#EA580C' }; // ANEW緑 / GFネイビー / フロンティアオレンジ
+const DESTCOLOR = { anew:'#16A34A', gf:'#1E3A8A', frontier:'#EA580C' };
 const DESTBTN = { anew:'destAnew', gf:'destGf', frontier:'destFr' };
+
 function setDest(d){
   dest = d;
   Object.keys(DESTBTN).forEach(k=>{
@@ -161,20 +178,24 @@ function setDest(d){
     if(k===d){ b.classList.add('active'); b.style.background=DESTCOLOR[d]; b.style.borderColor=DESTCOLOR[d]; b.style.color='#fff'; b.style.boxShadow='0 3px 10px '+DESTCOLOR[d]+'33'; }
     else { b.classList.remove('active'); b.style.background='#fff'; b.style.borderColor='#dde4df'; b.style.color='#7c8a83'; b.style.boxShadow='none'; }
   });
-  if(document.getElementById('paneList').style.display!=='none') loadList();
+  const lv=document.getElementById('paneList').style.display!=='none';
+  const av=document.getElementById('paneArrived').style.display!=='none';
+  if(lv||av) refresh();
 }
-setDest('anew'); // 初期はANEW（緑）を選択状態に
+setDest('anew');
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
 function showTab(t){
   document.getElementById('tabReq').classList.toggle('active', t==='req');
   document.getElementById('tabList').classList.toggle('active', t==='list');
-  document.getElementById('paneReq').style.display = t==='req'?'':'none';
-  document.getElementById('paneList').style.display = t==='list'?'':'none';
-  if(t==='list') loadList();
+  document.getElementById('tabArrived').classList.toggle('active', t==='arrived');
+  document.getElementById('paneReq').style.display     = t==='req'?'':'none';
+  document.getElementById('paneList').style.display    = t==='list'?'':'none';
+  document.getElementById('paneArrived').style.display = t==='arrived'?'':'none';
+  if(t==='list' || t==='arrived') refresh();
 }
 
-/* ===== GAS通信（読み：GET / 書き：POST。書き込み後はGETで再読込して反映） ===== */
+/* ===== GAS通信（読み：GET / 書き：POST） ===== */
 async function apiLoad(){
   if(!GAS_URL) return [];
   try{ const r=await fetch(GAS_URL+'?dest='+dest+'&t='+Date.now()); const d=await r.json(); return Array.isArray(d.rows)?d.rows:[]; }catch(e){ return []; }
@@ -217,19 +238,27 @@ function n(v){ return (v===''||v==null)?0:Number(v)||0; }
 function estAmount(r){ const a=n(r.lotprice)*n(r.lotqty); return a?('概算 '+a.toLocaleString()+'円'):''; }
 function badge(s){ if(s==='到着済')return '<span class="badge b-arr">到着済 ✓</span>'; if(s==='発注済')return '<span class="badge b-ord">発注済（到着待ち）</span>'; return '<span class="badge b-req">依頼（未発注）</span>'; }
 
-async function loadList(){
-  const note = document.getElementById('srvNotice'); note.style.display='';
-  note.textContent = '「'+DESTNAME[dest]+'」の現在の期間タブの内容です。依頼 → 発注処理 → 受取通知 の順に進みます。受取通知をすると到着日が記録されます。';
-  const box=document.getElementById('listBox'); box.innerHTML='<div class="empty">読み込み中…</div>';
+/* 読み込み → 発注状況＋到着済みを両方描画 */
+async function refresh(){
+  const lb=document.getElementById('listBox'); if(lb) lb.innerHTML='<div class="empty">読み込み中…</div>';
   rows = await apiLoad();
-  if(!rows.length){ box.innerHTML='<div class="empty">まだ発注依頼はありません。</div>'; return; }
-  box.innerHTML = rows.map(r=>{
+  renderList(); renderArrived();
+}
+
+/* 発注状況：到着済み以外（依頼／発注済） */
+function renderList(){
+  const note = document.getElementById('srvNotice'); note.style.display='';
+  note.textContent = '「'+DESTNAME[dest]+'」の発注状況です。依頼 → 発注処理 → 受取通知 の順に進みます。受取通知をすると「到着済み」タブへ移動します。';
+  const box=document.getElementById('listBox');
+  const list = rows.filter(r=> r.status!=='到着済');
+  if(!list.length){ box.innerHTML='<div class="empty">進行中の発注はありません。</div>'; return; }
+  box.innerHTML = list.map(r=>{
     const canOrder = r.id && r.status==='依頼';
     const canReceive = r.id && r.status==='発注済';
     let act='';
     if(canOrder) act=`<button class="btn ghost" onclick="openOrder('${esc(r.id)}')">発注処理</button>`;
     else if(canReceive) act=`<button class="btn" onclick="receive('${esc(r.id)}')">受け取りました（受取通知）</button>`;
-    const dim = (r.status==='発注済'||r.status==='到着済');
+    const dim = (r.status==='発注済');
     return `
     <div class="card"${dim?' style="background:#f3f5f4"':''}>
       <div class="row-head">${badge(r.status)}<div class="row-title">${esc(r.item)}</div><div style="margin-left:auto;font-size:12px;color:#7c8a83">${esc(fmtDate(r.reqdate))}</div></div>
@@ -242,13 +271,53 @@ async function loadList(){
         ${r.url?`<b>URL</b><span><a href="${esc(r.url)}" target="_blank" rel="noopener">リンク</a></span>`:''}
         ${r.amount?`<b>発注金額</b><span>${Number(r.amount).toLocaleString()}円</span>`:''}
         ${r.orderdate?`<b>発注日/発注者</b><span>${esc(fmtDate(r.orderdate))} / ${esc(r.orderer||'-')}</span>`:''}
-        ${r.arrival?`<b>到着日</b><span>${esc(fmtDate(r.arrival))}</span>`:''}
         ${r.note?`<b>備考</b><span>${esc(r.note)}</span>`:''}
       </div>
       ${act?`<div class="actions">${act}</div>`:''}
     </div>`;
   }).join('');
 }
+
+/* 到着済み：過去ログ＋検索＋コピー */
+function renderArrived(){
+  const box=document.getElementById('arrivedBox');
+  const q=(document.getElementById('arrSearch').value||'').trim().toLowerCase();
+  let list = rows.filter(r=> r.status==='到着済');
+  if(q){
+    list = list.filter(r=> [r.item,r.code,r.size,r.color,r.vendor,r.requester,r.orderer,r.receiver,r.note]
+      .map(x=>String(x||'').toLowerCase()).join(' ').includes(q));
+  }
+  if(!list.length){ box.innerHTML='<div class="empty">'+(q?'該当する到着済みはありません。':'まだ到着済みの備品はありません。')+'</div>'; return; }
+  box.innerHTML = list.map(r=>`
+    <div class="card" style="background:#f3f5f4">
+      <div class="row-head">${badge(r.status)}<div class="row-title">${esc(r.item)}</div><div style="margin-left:auto;font-size:12px;color:#7c8a83">到着 ${esc(fmtDate(r.arrival))}</div></div>
+      <div class="kv">
+        <b>依頼者</b><span>${esc(r.requester||'')}</span>
+        <b>品番/JAN</b><span>${esc(r.code||'-')}</span>
+        <b>サイズ/カラー</b><span>${esc(r.size||'-')} / ${esc(r.color||'-')}</span>
+        <b>ロット</b><span>${esc(r.lot||'-')}入 × ${esc(r.lotqty||'-')}ロット（1ロット ${r.lotprice?Number(r.lotprice).toLocaleString()+'円':'-'}）</span>
+        ${r.vendor?`<b>発注先</b><span>${esc(r.vendor)}</span>`:''}
+        ${r.amount?`<b>発注金額</b><span>${Number(r.amount).toLocaleString()}円</span>`:''}
+        ${r.url?`<b>URL</b><span><a href="${esc(r.url)}" target="_blank" rel="noopener">リンク</a></span>`:''}
+        ${r.note?`<b>備考</b><span>${esc(r.note)}</span>`:''}
+      </div>
+      <div class="actions"><button class="btn ghost" onclick="copyToForm('${esc(r.id)}')">この備品をコピーして再注文</button></div>
+    </div>`).join('');
+}
+
+/* 到着済みから「コピーして再注文」→ 依頼フォームへ自動入力 */
+function copyToForm(id){
+  const r=rows.find(x=>String(x.id)===String(id)); if(!r) return;
+  const set=(k,v)=>document.getElementById(k).value=(v==null?'':v);
+  set('f_item',r.item); set('f_code',r.code); set('f_size',r.size); set('f_color',r.color);
+  set('f_lot',r.lot); set('f_lotprice',r.lotprice); set('f_lotqty',r.lotqty);
+  set('f_url',r.url); set('f_note',r.note);
+  document.getElementById('f_reqdate').value=todayStr();
+  showTab('req');
+  window.scrollTo({top:0,behavior:'smooth'});
+  toast('コピーしました。内容を確認して「この内容で依頼する」を押してください');
+}
+
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmtDate(v){ if(!v) return ''; const s=String(v); if(s.indexOf('T')>=0){ const d=new Date(s); if(!isNaN(d)) return (d.getMonth()+1)+'/'+d.getDate(); } const m=s.match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? (Number(m[2])+'/'+Number(m[3])) : s; }
 
@@ -271,12 +340,12 @@ async function saveOrder(){
     orderdate:document.getElementById('m_orderdate').value,
     orderer:document.getElementById('m_orderer').value.trim()||ME_NAME
   });
-  btn.disabled=false; closeModal(); toast('発注処理を保存しました'); await sleep(800); loadList();
+  btn.disabled=false; closeModal(); toast('発注処理を保存しました'); await sleep(800); refresh();
 }
 async function receive(id){
-  if(!confirm('この備品を「受け取った」として通知します。よろしいですか？\n（到着日が今日になり、受取担当者として あなたの名前 が記録されます）')) return;
+  if(!confirm('この備品を「受け取った」として通知します。よろしいですか？\n（到着日が今日になり、受取担当者として あなたの名前 が記録されます。「到着済み」タブへ移動します）')) return;
   await apiPost({ action:'receive', dest:dest, id:id, receiver:ME_NAME||'（不明）', arrival:todayStr() });
-  toast('受取通知しました！ありがとうございます'); await sleep(800); loadList();
+  toast('受取通知しました！「到着済み」へ移動しました'); await sleep(800); refresh();
 }
 
 let tt; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),1900); }
