@@ -80,10 +80,12 @@
 <div class="wrap">
   <!-- 口座（振込元）区分：全タブ共通 -->
   <div class="seclabel">振込元（口座）区分 ― 経理はここで区別します</div>
-  <div class="tabs" style="margin-bottom:14px;">
-    <button type="button" class="tab active" id="destAnew" onclick="setDest('anew')">ANEW</button>
-    <button type="button" class="tab" id="destGf" onclick="setDest('gf')">GF（古着）</button>
-    <button type="button" class="tab" id="destFr" onclick="setDest('frontier')">フロンティア</button>
+  <div style="margin-bottom:14px;max-width:260px;">
+    <select id="destSel" onchange="setDest(this.value)" style="font-weight:800;font-size:15px;padding:12px 14px;border-width:2px;">
+      <option value="anew">ANEW</option>
+      <option value="gf">GF（古着）</option>
+      <option value="frontier">フロンティア</option>
+    </select>
   </div>
 
   <!-- メインタブ：依頼／状況／到着済み -->
@@ -148,6 +150,9 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- バージョンバッジ（右下・タップで更新履歴） -->
+<div id="appVerBadge" onclick="alert('備品発注 更新履歴\n\nv1.1（2026/6/14）\n・口座区分（ANEW／GF／フロンティア）を横ボタンからプルダウン選択に変更\n・発注状況に「並び替え（状態順／新しい順／古い順）」を追加\n・状態でボタンの色を区別（発注処理＝オレンジ／受け取り＝ブルー）\n・依頼のままでも「受け取りました（到着済へ）」で移動できるように\n・到着済みに「受取者」を表示\n\nv1.0\n・備品発注の公開（依頼／発注状況／到着済み）')" style="position:fixed;right:10px;bottom:10px;z-index:60;background:rgba(31,45,40,.82);color:#fff;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;cursor:pointer;font-family:inherit;user-select:none;">v1.1</div>
+
 <script>
 /* ====== 設定 ====== */
 const GAS_URL = "https://script.google.com/macros/s/AKfycbwZ_5IRh5GKeZo46qj380--VwU9Gco5dPC4u03Aos_bB6ALOrJNzgxT6_Ne4M6ioubGYw/exec";
@@ -173,11 +178,8 @@ const DESTBTN = { anew:'destAnew', gf:'destGf', frontier:'destFr' };
 
 function setDest(d){
   dest = d;
-  Object.keys(DESTBTN).forEach(k=>{
-    const b=document.getElementById(DESTBTN[k]);
-    if(k===d){ b.classList.add('active'); b.style.background=DESTCOLOR[d]; b.style.borderColor=DESTCOLOR[d]; b.style.color='#fff'; b.style.boxShadow='0 3px 10px '+DESTCOLOR[d]+'33'; }
-    else { b.classList.remove('active'); b.style.background='#fff'; b.style.borderColor='#dde4df'; b.style.color='#7c8a83'; b.style.boxShadow='none'; }
-  });
+  const sel=document.getElementById('destSel');
+  if(sel){ if(sel.value!==d) sel.value=d; sel.style.borderColor=DESTCOLOR[d]; sel.style.color=DESTCOLOR[d]; sel.style.boxShadow='0 0 0 2px '+DESTCOLOR[d]+'22'; }
   const lv=document.getElementById('paneList').style.display!=='none';
   const av=document.getElementById('paneArrived').style.display!=='none';
   if(lv||av) refresh();
@@ -245,19 +247,33 @@ async function refresh(){
   renderList(); renderArrived();
 }
 
-/* 発注状況：到着済み以外（依頼／発注済） */
+/* 発注状況：到着済み以外（依頼／発注済）。状態などで並び替え可能 */
+let listSort = 'status'; // status=状態順 / new=新しい順 / old=古い順
+function setListSort(v){ listSort = v; renderList(); }
+function statusRank(s){ return s==='発注済' ? 0 : s==='依頼' ? 1 : 2; } // 到着待ち（発注済）を上に
 function renderList(){
   const note = document.getElementById('srvNotice'); note.style.display='';
   note.textContent = '「'+DESTNAME[dest]+'」の発注状況です。依頼 → 発注処理 → 受取通知 の順に進みます。受取通知をすると「到着済み」タブへ移動します。';
   const box=document.getElementById('listBox');
-  const list = rows.filter(r=> r.status!=='到着済');
+  let list = rows.filter(r=> r.status!=='到着済');
   if(!list.length){ box.innerHTML='<div class="empty">進行中の発注はありません。</div>'; return; }
-  box.innerHTML = list.map(r=>{
+  list = list.slice().sort((a,b)=>{
+    if(listSort==='status'){ const d=statusRank(a.status)-statusRank(b.status); if(d) return d; return String(b.reqdate||'').localeCompare(String(a.reqdate||'')); }
+    if(listSort==='old') return String(a.reqdate||'').localeCompare(String(b.reqdate||''));
+    return String(b.reqdate||'').localeCompare(String(a.reqdate||''));
+  });
+  const sortUi = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:12.5px;font-weight:800;color:#46554d">並び替え：
+    <select onchange="setListSort(this.value)" style="width:auto;padding:8px 11px;font-weight:800">
+      <option value="status"${listSort==='status'?' selected':''}>状態順（到着待ち→依頼）</option>
+      <option value="new"${listSort==='new'?' selected':''}>新しい順</option>
+      <option value="old"${listSort==='old'?' selected':''}>古い順</option>
+    </select></div>`;
+  box.innerHTML = sortUi + list.map(r=>{
     const canOrder = r.id && r.status==='依頼';
-    const canReceive = r.id && r.status==='発注済';
+    const canReceive = r.id && (r.status==='発注済' || r.status==='依頼'); // 依頼のままでも到着済へ動かせるように
     let act='';
-    if(canOrder) act=`<button class="btn ghost" onclick="openOrder('${esc(r.id)}')">発注処理</button>`;
-    else if(canReceive) act=`<button class="btn" onclick="receive('${esc(r.id)}')">受け取りました（受取通知）</button>`;
+    if(canOrder) act+=`<button class="btn" style="background:#EA580C" onclick="openOrder('${esc(r.id)}')">発注処理</button>`;
+    if(canReceive) act+=`<button class="btn" style="background:#0369A1" onclick="receive('${esc(r.id)}')">受け取りました（到着済へ）</button>`;
     const dim = (r.status==='発注済');
     return `
     <div class="card"${dim?' style="background:#f3f5f4"':''}>
@@ -293,6 +309,7 @@ function renderArrived(){
       <div class="row-head">${badge(r.status)}<div class="row-title">${esc(r.item)}</div><div style="margin-left:auto;font-size:12px;color:#7c8a83">到着 ${esc(fmtDate(r.arrival))}</div></div>
       <div class="kv">
         <b>依頼者</b><span>${esc(r.requester||'')}</span>
+        <b>受取者</b><span style="font-weight:800;color:#15803D">${esc(r.receiver||'-')}</span>
         <b>品番/JAN</b><span>${esc(r.code||'-')}</span>
         <b>サイズ/カラー</b><span>${esc(r.size||'-')} / ${esc(r.color||'-')}</span>
         <b>ロット</b><span>${esc(r.lot||'-')}入 × ${esc(r.lotqty||'-')}ロット（1ロット ${r.lotprice?Number(r.lotprice).toLocaleString()+'円':'-'}）</span>
