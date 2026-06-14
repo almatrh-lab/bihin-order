@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ANEW 備品発注</title>
 <style>
-  :root{ --green:#2faa56; --green-dark:#1f8a44; --green-light:#e7f6ec; --ink:#1f2d28; --muted:#7c8a83; --line:#dde4df; --bg:#f6f8f7; }
+  :root{ --green:#2faa56; --green-dark:#1f8a44; --green-light:#e7f6ec; --ink:#1f2d28; --muted:#7c8a83; --line:#dde4df; --bg:#f6f8f7; --dest:#16A34A; }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;padding-bottom:60px;}
   header{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;position:sticky;top:0;background:rgba(255,255,255,.97);backdrop-filter:blur(8px);z-index:20;}
@@ -21,7 +21,7 @@
   .seclabel{font-size:11.5px;font-weight:800;color:var(--muted);margin:0 2px 6px;}
   .tabs{display:flex;gap:8px;margin-bottom:16px;}
   .tab{flex:1;padding:11px;border:1.5px solid var(--line);background:#fff;border-radius:12px;font-size:14px;font-weight:800;color:var(--muted);cursor:pointer;font-family:inherit;}
-  .tab.active{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 3px 10px rgba(47,170,86,.22);}
+  .tab.active{background:var(--dest);border-color:var(--dest);color:#fff;box-shadow:0 3px 10px rgba(31,45,40,.18);}
   .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 1px 2px rgba(16,24,40,.04);}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   @media(max-width:640px){.grid{grid-template-columns:1fr;}}
@@ -37,6 +37,8 @@
   .btn:disabled{opacity:.5;cursor:default;}
   .btn.ghost{background:#fff;color:var(--green);border:1.5px solid var(--green);}
   .btn.gray{background:#fff;color:var(--muted);border:1.5px solid var(--line);}
+  #submitBtn{background:var(--dest);}
+  #submitBtn:hover{filter:brightness(.92);}
   .actions{display:flex;gap:10px;margin-top:16px;}
   .badge{display:inline-block;font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;}
   .b-req{background:#FFF4E5;color:#C2410C;} .b-ord{background:#E0F2FE;color:#0369A1;} .b-arr{background:#EAF8F0;color:#15803D;}
@@ -83,7 +85,7 @@
   <div style="margin-bottom:14px;max-width:260px;">
     <select id="destSel" onchange="setDest(this.value)" style="font-weight:800;font-size:15px;padding:12px 14px;border-width:2px;">
       <option value="anew">ANEW</option>
-      <option value="gf">GF（古着）</option>
+      <option value="gf">GOODFLAT</option>
       <option value="frontier">フロンティア</option>
     </select>
   </div>
@@ -151,7 +153,7 @@
 <div class="toast" id="toast"></div>
 
 <!-- バージョンバッジ（右下・タップで更新履歴） -->
-<div id="appVerBadge" onclick="alert('備品発注 更新履歴\n\nv1.3（2026/6/15）\n・「振込元（口座）区分」→「依頼元（口座）区分」に表記変更\n・ボタンの色を選択中の事業部カラー（ANEW=緑／GF=紺／フロンティア=橙）に連動\n・到着済み以外の備品すべてに「受け取りました（到着済へ）」ボタンを表示（歯抜け解消）\n\nv1.2（2026/6/14）\n・ANEWアプリの「到着待ちアラート」から、該当の品目に一発でジャンプ→その場で「受け取りました」を押せるように（発注状況タブを自動で開き、品目をハイライト）\n\nv1.1（2026/6/14）\n・口座区分（ANEW／GF／フロンティア）を横ボタンからプルダウン選択に変更\n・発注状況に「並び替え（状態順／新しい順／古い順）」を追加\n・状態でボタンの色を区別（発注処理＝オレンジ／受け取り＝ブルー）\n・依頼のままでも「受け取りました（到着済へ）」で移動できるように\n・到着済みに「受取者」を表示\n\nv1.0\n・備品発注の公開（依頼／発注状況／到着済み）')" style="position:fixed;right:10px;bottom:10px;z-index:60;background:rgba(31,45,40,.82);color:#fff;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;cursor:pointer;font-family:inherit;user-select:none;">v1.3</div>
+<div id="appVerBadge" onclick="alert('備品発注 更新履歴\n\nv1.4（2026/6/15）\n・「GF（古着）」→「GOODFLAT」に名称変更\n・メインタブ＆依頼ボタンの色を選択中の事業部カラー（ANEW=緑／GOODFLAT=紺／フロンティア=橙）に連動\n・発注状況・到着済みの明細に「依頼日」を追加\n・発注状況に「今月の発注金額（選択中事業部の合計）」を表示\n\nv1.3（2026/6/15）\n・「振込元（口座）区分」→「依頼元（口座）区分」に表記変更\n・ボタンの色を選択中の事業部カラー（ANEW=緑／GF=紺／フロンティア=橙）に連動\n・到着済み以外の備品すべてに「受け取りました（到着済へ）」ボタンを表示（歯抜け解消）\n\nv1.2（2026/6/14）\n・ANEWアプリの「到着待ちアラート」から、該当の品目に一発でジャンプ→その場で「受け取りました」を押せるように（発注状況タブを自動で開き、品目をハイライト）\n\nv1.1（2026/6/14）\n・口座区分（ANEW／GF／フロンティア）を横ボタンからプルダウン選択に変更\n・発注状況に「並び替え（状態順／新しい順／古い順）」を追加\n・状態でボタンの色を区別（発注処理＝オレンジ／受け取り＝ブルー）\n・依頼のままでも「受け取りました（到着済へ）」で移動できるように\n・到着済みに「受取者」を表示\n\nv1.0\n・備品発注の公開（依頼／発注状況／到着済み）')" style="position:fixed;right:10px;bottom:10px;z-index:60;background:rgba(31,45,40,.82);color:#fff;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;cursor:pointer;font-family:inherit;user-select:none;">v1.4</div>
 
 <script>
 /* ====== 設定 ====== */
@@ -174,15 +176,18 @@ document.getElementById('f_requester').value = ME_NAME || '（アプリから開
 
 let rows = [];   // 現在の口座区分の発注データ
 let editId = null;
-let dest = 'anew';   // anew=ANEW / gf=GF（古着）/ frontier=フロンティア
-const DESTNAME = { anew:'ANEW', gf:'GF（古着）', frontier:'フロンティア' };
+let dest = 'anew';   // anew=ANEW / gf=GOODFLAT / frontier=フロンティア
+const DESTNAME = { anew:'ANEW', gf:'GOODFLAT', frontier:'フロンティア' };
 const DESTCOLOR = { anew:'#16A34A', gf:'#1E3A8A', frontier:'#EA580C' };
 const DESTBTN = { anew:'destAnew', gf:'destGf', frontier:'destFr' };
 
 function setDest(d){
   dest = d;
+  const dc = DESTCOLOR[d] || '#16A34A';
+  // 事業部カラーをCSS変数に反映（メインタブの.active／依頼ボタン#submitBtnが参照）
+  document.documentElement.style.setProperty('--dest', dc);
   const sel=document.getElementById('destSel');
-  if(sel){ if(sel.value!==d) sel.value=d; sel.style.borderColor=DESTCOLOR[d]; sel.style.color=DESTCOLOR[d]; sel.style.boxShadow='0 0 0 2px '+DESTCOLOR[d]+'22'; }
+  if(sel){ if(sel.value!==d) sel.value=d; sel.style.borderColor=dc; sel.style.color=dc; sel.style.boxShadow='0 0 0 2px '+dc+'22'; }
   const lv=document.getElementById('paneList').style.display!=='none';
   const av=document.getElementById('paneArrived').style.display!=='none';
   if(lv||av) refresh();
@@ -240,6 +245,20 @@ async function submitReq(){
 }
 
 function n(v){ return (v===''||v==null)?0:Number(v)||0; }
+/* 今月（発注日ベース）の発注金額合計と件数。orderdateが無い行は除外 */
+function monthlyTotal(){
+  const now=new Date(); const ym=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  let sum=0, cnt=0;
+  rows.forEach(r=>{
+    if(!r.orderdate) return;
+    const s=String(r.orderdate);
+    let key='';
+    if(s.indexOf('T')>=0){ const d=new Date(s); if(!isNaN(d)) key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+    else { const m=s.match(/^(\d{4})-(\d{2})/); if(m) key=m[1]+'-'+m[2]; }
+    if(key===ym){ sum+=n(r.amount); cnt++; }
+  });
+  return {sum,cnt};
+}
 function estAmount(r){ const a=n(r.lotprice)*n(r.lotqty); return a?('概算 '+a.toLocaleString()+'円'):''; }
 function badge(s){ if(s==='到着済')return '<span class="badge b-arr">到着済 ✓</span>'; if(s==='発注済')return '<span class="badge b-ord">発注済（到着待ち）</span>'; return '<span class="badge b-req">依頼（未発注）</span>'; }
 
@@ -258,8 +277,14 @@ function renderList(){
   const note = document.getElementById('srvNotice'); note.style.display='';
   note.textContent = '「'+DESTNAME[dest]+'」の発注状況です。依頼 → 発注処理 → 受取通知 の順に進みます。受取通知をすると「到着済み」タブへ移動します。';
   const box=document.getElementById('listBox');
+  const dcSum = DESTCOLOR[dest] || '#16A34A';
+  const mt = monthlyTotal();
+  const sumUi = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:11px 14px;border:1.5px solid ${dcSum}33;background:${dcSum}0d;border-radius:12px;font-size:13px;font-weight:800;color:#46554d">
+    <span>今月の発注金額（${esc(DESTNAME[dest])}）</span>
+    <span style="margin-left:auto;font-size:16px;color:${dcSum}">¥${mt.sum.toLocaleString()}</span>
+    <span style="color:#7c8a83;font-weight:700">（${mt.cnt}件）</span></div>`;
   let list = rows.filter(r=> r.status!=='到着済');
-  if(!list.length){ box.innerHTML='<div class="empty">進行中の発注はありません。</div>'; return; }
+  if(!list.length){ box.innerHTML=sumUi+'<div class="empty">進行中の発注はありません。</div>'; return; }
   list = list.slice().sort((a,b)=>{
     if(listSort==='status'){ const d=statusRank(a.status)-statusRank(b.status); if(d) return d; return String(b.reqdate||'').localeCompare(String(a.reqdate||'')); }
     if(listSort==='old') return String(a.reqdate||'').localeCompare(String(b.reqdate||''));
@@ -271,7 +296,7 @@ function renderList(){
       <option value="new"${listSort==='new'?' selected':''}>新しい順</option>
       <option value="old"${listSort==='old'?' selected':''}>古い順</option>
     </select></div>`;
-  box.innerHTML = sortUi + list.map(r=>{
+  box.innerHTML = sumUi + sortUi + list.map(r=>{
     const dc = DESTCOLOR[dest] || '#16A34A'; // 選択中の事業部カラー（ANEW=緑/GF=紺/フロンティア=橙）に連動
     const canOrder = r.id && r.status==='依頼';
     const canReceive = r.id && r.status!=='到着済'; // 到着済以外は全部に受け取りボタンを出す（歯抜け解消）
@@ -283,6 +308,7 @@ function renderList(){
     <div class="card" id="row-${esc(r.id)}"${dim?' style="background:#f3f5f4"':''}>
       <div class="row-head">${badge(r.status)}<div class="row-title">${esc(r.item)}</div><div style="margin-left:auto;font-size:12px;color:#7c8a83">${esc(fmtDate(r.reqdate))}</div></div>
       <div class="kv">
+        <b>依頼日</b><span>${esc(fmtDate(r.reqdate))}</span>
         <b>依頼者</b><span>${esc(r.requester||'')}</span>
         <b>品番/JAN</b><span>${esc(r.code||'-')}</span>
         <b>サイズ/カラー</b><span>${esc(r.size||'-')} / ${esc(r.color||'-')}</span>
@@ -322,6 +348,7 @@ function renderArrived(){
     <div class="card" style="background:#f3f5f4">
       <div class="row-head">${badge(r.status)}<div class="row-title">${esc(r.item)}</div><div style="margin-left:auto;font-size:12px;color:#7c8a83">到着 ${esc(fmtDate(r.arrival))}</div></div>
       <div class="kv">
+        <b>依頼日</b><span>${esc(fmtDate(r.reqdate))}</span>
         <b>依頼者</b><span>${esc(r.requester||'')}</span>
         <b>受取者</b><span style="font-weight:800;color:#15803D">${esc(r.receiver||'-')}</span>
         <b>品番/JAN</b><span>${esc(r.code||'-')}</span>
