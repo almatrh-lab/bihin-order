@@ -79,7 +79,7 @@
 
 <div class="wrap">
   <!-- 口座（振込元）区分：全タブ共通 -->
-  <div class="seclabel">振込元（口座）区分 ― 経理はここで区別します</div>
+  <div class="seclabel">依頼元（口座）区分 ― 経理はここで区別します</div>
   <div style="margin-bottom:14px;max-width:260px;">
     <select id="destSel" onchange="setDest(this.value)" style="font-weight:800;font-size:15px;padding:12px 14px;border-width:2px;">
       <option value="anew">ANEW</option>
@@ -151,7 +151,7 @@
 <div class="toast" id="toast"></div>
 
 <!-- バージョンバッジ（右下・タップで更新履歴） -->
-<div id="appVerBadge" onclick="alert('備品発注 更新履歴\n\nv1.2（2026/6/14）\n・ANEWアプリの「到着待ちアラート」から、該当の品目に一発でジャンプ→その場で「受け取りました」を押せるように（発注状況タブを自動で開き、品目をハイライト）\n\nv1.1（2026/6/14）\n・口座区分（ANEW／GF／フロンティア）を横ボタンからプルダウン選択に変更\n・発注状況に「並び替え（状態順／新しい順／古い順）」を追加\n・状態でボタンの色を区別（発注処理＝オレンジ／受け取り＝ブルー）\n・依頼のままでも「受け取りました（到着済へ）」で移動できるように\n・到着済みに「受取者」を表示\n\nv1.0\n・備品発注の公開（依頼／発注状況／到着済み）')" style="position:fixed;right:10px;bottom:10px;z-index:60;background:rgba(31,45,40,.82);color:#fff;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;cursor:pointer;font-family:inherit;user-select:none;">v1.2</div>
+<div id="appVerBadge" onclick="alert('備品発注 更新履歴\n\nv1.3（2026/6/15）\n・「振込元（口座）区分」→「依頼元（口座）区分」に表記変更\n・ボタンの色を選択中の事業部カラー（ANEW=緑／GF=紺／フロンティア=橙）に連動\n・到着済み以外の備品すべてに「受け取りました（到着済へ）」ボタンを表示（歯抜け解消）\n\nv1.2（2026/6/14）\n・ANEWアプリの「到着待ちアラート」から、該当の品目に一発でジャンプ→その場で「受け取りました」を押せるように（発注状況タブを自動で開き、品目をハイライト）\n\nv1.1（2026/6/14）\n・口座区分（ANEW／GF／フロンティア）を横ボタンからプルダウン選択に変更\n・発注状況に「並び替え（状態順／新しい順／古い順）」を追加\n・状態でボタンの色を区別（発注処理＝オレンジ／受け取り＝ブルー）\n・依頼のままでも「受け取りました（到着済へ）」で移動できるように\n・到着済みに「受取者」を表示\n\nv1.0\n・備品発注の公開（依頼／発注状況／到着済み）')" style="position:fixed;right:10px;bottom:10px;z-index:60;background:rgba(31,45,40,.82);color:#fff;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;cursor:pointer;font-family:inherit;user-select:none;">v1.3</div>
 
 <script>
 /* ====== 設定 ====== */
@@ -272,11 +272,12 @@ function renderList(){
       <option value="old"${listSort==='old'?' selected':''}>古い順</option>
     </select></div>`;
   box.innerHTML = sortUi + list.map(r=>{
+    const dc = DESTCOLOR[dest] || '#16A34A'; // 選択中の事業部カラー（ANEW=緑/GF=紺/フロンティア=橙）に連動
     const canOrder = r.id && r.status==='依頼';
-    const canReceive = r.id && (r.status==='発注済' || r.status==='依頼'); // 依頼のままでも到着済へ動かせるように
+    const canReceive = r.id && r.status!=='到着済'; // 到着済以外は全部に受け取りボタンを出す（歯抜け解消）
     let act='';
-    if(canOrder) act+=`<button class="btn" style="background:#EA580C" onclick="openOrder('${esc(r.id)}')">発注処理</button>`;
-    if(canReceive) act+=`<button class="btn" style="background:#0369A1" onclick="receive('${esc(r.id)}')">受け取りました（到着済へ）</button>`;
+    if(canOrder) act+=`<button class="btn" style="background:#fff;color:${dc};border:1.5px solid ${dc}" onclick="openOrder('${esc(r.id)}')">発注処理</button>`;
+    if(canReceive) act+=`<button class="btn" style="background:${dc};border-color:${dc}" onclick="receive('${esc(r.id)}')">受け取りました（到着済へ）</button>`;
     const dim = (r.status==='発注済');
     return `
     <div class="card" id="row-${esc(r.id)}"${dim?' style="background:#f3f5f4"':''}>
