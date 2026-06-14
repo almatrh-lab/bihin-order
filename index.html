@@ -151,7 +151,7 @@
 <div class="toast" id="toast"></div>
 
 <!-- バージョンバッジ（右下・タップで更新履歴） -->
-<div id="appVerBadge" onclick="alert('備品発注 更新履歴\n\nv1.1（2026/6/14）\n・口座区分（ANEW／GF／フロンティア）を横ボタンからプルダウン選択に変更\n・発注状況に「並び替え（状態順／新しい順／古い順）」を追加\n・状態でボタンの色を区別（発注処理＝オレンジ／受け取り＝ブルー）\n・依頼のままでも「受け取りました（到着済へ）」で移動できるように\n・到着済みに「受取者」を表示\n\nv1.0\n・備品発注の公開（依頼／発注状況／到着済み）')" style="position:fixed;right:10px;bottom:10px;z-index:60;background:rgba(31,45,40,.82);color:#fff;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;cursor:pointer;font-family:inherit;user-select:none;">v1.1</div>
+<div id="appVerBadge" onclick="alert('備品発注 更新履歴\n\nv1.2（2026/6/14）\n・ANEWアプリの「到着待ちアラート」から、該当の品目に一発でジャンプ→その場で「受け取りました」を押せるように（発注状況タブを自動で開き、品目をハイライト）\n\nv1.1（2026/6/14）\n・口座区分（ANEW／GF／フロンティア）を横ボタンからプルダウン選択に変更\n・発注状況に「並び替え（状態順／新しい順／古い順）」を追加\n・状態でボタンの色を区別（発注処理＝オレンジ／受け取り＝ブルー）\n・依頼のままでも「受け取りました（到着済へ）」で移動できるように\n・到着済みに「受取者」を表示\n\nv1.0\n・備品発注の公開（依頼／発注状況／到着済み）')" style="position:fixed;right:10px;bottom:10px;z-index:60;background:rgba(31,45,40,.82);color:#fff;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;cursor:pointer;font-family:inherit;user-select:none;">v1.2</div>
 
 <script>
 /* ====== 設定 ====== */
@@ -161,6 +161,9 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbwZ_5IRh5GKeZo46qj380--
 const params = new URLSearchParams(location.search);
 const ME_NAME = params.get('name') || '';
 const ME_UID  = params.get('uid') || '';
+const DEST_PARAM = params.get('dest') || '';   // ハブのアラートから「事業部」を指定して開かれる
+const TAB_PARAM  = params.get('tab')  || '';    // list=発注状況 / arrived=到着済み
+let focusId = params.get('focus') || '';        // この品目(行ID)へジャンプ＆ハイライト
 
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function genId(){return 'po_'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36);}
@@ -184,7 +187,7 @@ function setDest(d){
   const av=document.getElementById('paneArrived').style.display!=='none';
   if(lv||av) refresh();
 }
-setDest('anew');
+setDest((DEST_PARAM && DESTNAME[DEST_PARAM]) ? DEST_PARAM : 'anew');
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
 function showTab(t){
@@ -276,7 +279,7 @@ function renderList(){
     if(canReceive) act+=`<button class="btn" style="background:#0369A1" onclick="receive('${esc(r.id)}')">受け取りました（到着済へ）</button>`;
     const dim = (r.status==='発注済');
     return `
-    <div class="card"${dim?' style="background:#f3f5f4"':''}>
+    <div class="card" id="row-${esc(r.id)}"${dim?' style="background:#f3f5f4"':''}>
       <div class="row-head">${badge(r.status)}<div class="row-title">${esc(r.item)}</div><div style="margin-left:auto;font-size:12px;color:#7c8a83">${esc(fmtDate(r.reqdate))}</div></div>
       <div class="kv">
         <b>依頼者</b><span>${esc(r.requester||'')}</span>
@@ -292,6 +295,16 @@ function renderList(){
       ${act?`<div class="actions">${act}</div>`:''}
     </div>`;
   }).join('');
+  // ハブのアラートから飛んできた場合：該当の品目までスクロール＆ハイライト（受け取りボタンはそのまま押せる）
+  if(focusId){
+    const el=document.getElementById('row-'+focusId);
+    if(el){
+      setTimeout(()=>{ el.scrollIntoView({behavior:'smooth',block:'center'}); }, 60);
+      el.style.outline='3px solid #EA580C'; el.style.outlineOffset='2px'; el.style.borderRadius='16px';
+      toast('この備品にジャンプしました。届いていれば「受け取りました」を押してください');
+      focusId=''; // 並び替え等の再描画で再ジャンプしないよう一度きり
+    }
+  }
 }
 
 /* 到着済み：過去ログ＋検索＋コピー */
@@ -367,6 +380,10 @@ async function receive(id){
 
 let tt; function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),1900); }
 document.getElementById('ov').addEventListener('click',e=>{ if(e.target.id==='ov') closeModal(); });
+
+/* ハブの「到着待ちアラート」等から ?tab=list&focus=… で開かれたら、発注状況タブを開いて該当品目へジャンプ */
+if(focusId || TAB_PARAM==='list'){ showTab('list'); }
+else if(TAB_PARAM==='arrived'){ showTab('arrived'); }
 </script>
 </body>
 </html>
