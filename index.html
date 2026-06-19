@@ -103,7 +103,7 @@
       <div class="grid">
         <div><label>依頼日</label><input id="f_reqdate" readonly></div>
         <div><label>依頼者</label><input id="f_requester" readonly></div>
-        <div class="full"><label>品目 <span class="req">*</span></label><input id="f_item" placeholder="例：宅配袋 A4サイズ"></div>
+        <div class="full"><label>品目 <span class="req">*</span></label><input id="f_item" placeholder="例：宅配袋 A4サイズ" onchange="onItemChange()" onblur="onItemChange()"><div id="f_itemHint" style="font-size:11.5px;color:#15803D;font-weight:700;margin-top:4px;display:none"></div></div>
         <div><label>品番 / JAN</label><input id="f_code" placeholder="例：4901234567890"></div>
         <div><label>サイズ</label><input id="f_size" placeholder="例：A4 / L"></div>
         <div><label>カラー</label><input id="f_color" placeholder="例：クラフト"></div>
@@ -138,7 +138,7 @@
   <div class="modal">
     <h3>発注処理（発注者が記入）</h3>
     <div class="grid">
-      <div class="full"><label>発注先</label><input id="m_vendor" placeholder="例：アスクル"></div>
+      <div class="full"><label>発注先</label><input id="m_vendor" placeholder="例：アスクル"><div id="m_vendorHint" style="font-size:11.5px;color:#15803D;font-weight:700;margin-top:4px;display:none"></div></div>
       <div><label>発注金額（円）</label><input id="m_amount" type="number" min="0"></div>
       <div><label>発注日</label><input id="m_orderdate" type="date"></div>
       <div class="full"><label>発注者</label><input id="m_orderer"></div>
@@ -153,7 +153,7 @@
 <div class="toast" id="toast"></div>
 
 <!-- バージョンバッジ（右下・タップで更新履歴） -->
-<div id="appVerBadge" onclick="alert('備品発注 更新履歴\n\nv1.4（2026/6/15）\n・「GF（古着）」→「GOODFLAT」に名称変更\n・メインタブ＆依頼ボタンの色を選択中の事業部カラー（ANEW=緑／GOODFLAT=紺／フロンティア=橙）に連動\n・発注状況・到着済みの明細に「依頼日」を追加\n・発注状況に「今月の発注金額（選択中事業部の合計）」を表示\n\nv1.3（2026/6/15）\n・「振込元（口座）区分」→「依頼元（口座）区分」に表記変更\n・ボタンの色を選択中の事業部カラー（ANEW=緑／GF=紺／フロンティア=橙）に連動\n・到着済み以外の備品すべてに「受け取りました（到着済へ）」ボタンを表示（歯抜け解消）\n\nv1.2（2026/6/14）\n・ANEWアプリの「到着待ちアラート」から、該当の品目に一発でジャンプ→その場で「受け取りました」を押せるように（発注状況タブを自動で開き、品目をハイライト）\n\nv1.1（2026/6/14）\n・口座区分（ANEW／GF／フロンティア）を横ボタンからプルダウン選択に変更\n・発注状況に「並び替え（状態順／新しい順／古い順）」を追加\n・状態でボタンの色を区別（発注処理＝オレンジ／受け取り＝ブルー）\n・依頼のままでも「受け取りました（到着済へ）」で移動できるように\n・到着済みに「受取者」を表示\n\nv1.0\n・備品発注の公開（依頼／発注状況／到着済み）')" style="position:fixed;right:10px;bottom:10px;z-index:60;background:rgba(31,45,40,.82);color:#fff;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;cursor:pointer;font-family:inherit;user-select:none;">v1.4</div>
+<div id="appVerBadge" onclick="alert('備品発注 更新履歴\n\nv1.5（2026/6/19）\n・発注先の履歴オートフィル：発注処理を開いたとき、同じ品目で前回使った「発注先」を自動入力（手修正できます）。依頼フォームでも品目を入れると前回の参考URLを自動入力。\n\nv1.4（2026/6/15）\n・「GF（古着）」→「GOODFLAT」に名称変更\n・メインタブ＆依頼ボタンの色を選択中の事業部カラー（ANEW=緑／GOODFLAT=紺／フロンティア=橙）に連動\n・発注状況・到着済みの明細に「依頼日」を追加\n・発注状況に「今月の発注金額（選択中事業部の合計）」を表示\n\nv1.3（2026/6/15）\n・「振込元（口座）区分」→「依頼元（口座）区分」に表記変更\n・ボタンの色を選択中の事業部カラー（ANEW=緑／GF=紺／フロンティア=橙）に連動\n・到着済み以外の備品すべてに「受け取りました（到着済へ）」ボタンを表示（歯抜け解消）\n\nv1.2（2026/6/14）\n・ANEWアプリの「到着待ちアラート」から、該当の品目に一発でジャンプ→その場で「受け取りました」を押せるように（発注状況タブを自動で開き、品目をハイライト）\n\nv1.1（2026/6/14）\n・口座区分（ANEW／GF／フロンティア）を横ボタンからプルダウン選択に変更\n・発注状況に「並び替え（状態順／新しい順／古い順）」を追加\n・状態でボタンの色を区別（発注処理＝オレンジ／受け取り＝ブルー）\n・依頼のままでも「受け取りました（到着済へ）」で移動できるように\n・到着済みに「受取者」を表示\n\nv1.0\n・備品発注の公開（依頼／発注状況／到着済み）')" style="position:fixed;right:10px;bottom:10px;z-index:60;background:rgba(31,45,40,.82);color:#fff;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;cursor:pointer;font-family:inherit;user-select:none;">v1.5</div>
 
 <script>
 /* ====== 設定 ====== */
@@ -190,10 +190,35 @@ function setDest(d){
   if(sel){ if(sel.value!==d) sel.value=d; sel.style.borderColor=dc; sel.style.color=dc; sel.style.boxShadow='0 0 0 2px '+dc+'22'; }
   const lv=document.getElementById('paneList').style.display!=='none';
   const av=document.getElementById('paneArrived').style.display!=='none';
-  if(lv||av) refresh();
+  if(lv||av) refresh(); else loadRowsForAutofill();
 }
 setDest((DEST_PARAM && DESTNAME[DEST_PARAM]) ? DEST_PARAM : 'anew');
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+/* ===== 発注先の履歴オートフィル（同じ品目で前回使った発注先・参考URLを初期値に。手修正可） ===== */
+function normItem(s){ return String(s==null?'':s).trim().toLowerCase().replace(/\s+/g,''); }
+function historyForItem(item){
+  const key=normItem(item); if(!key) return null;
+  const cands = rows.filter(r=> normItem(r.item)===key && (r.vendor || r.url));
+  if(!cands.length) return null;
+  cands.sort((a,b)=> String(b.orderdate||b.reqdate||'').localeCompare(String(a.orderdate||a.reqdate||''))); // 新しい順
+  const v=(cands.find(r=>r.vendor)||{}).vendor||'';
+  const u=(cands.find(r=>r.url)||{}).url||'';
+  return (v||u)?{ vendor:v, url:u }:null;
+}
+/* 依頼フォームで品目を入れたら、前回の参考URL（発注先のページ）を自動入力 */
+function onItemChange(){
+  const hint=document.getElementById('f_itemHint'); if(hint){ hint.style.display='none'; hint.textContent=''; }
+  const h=historyForItem(document.getElementById('f_item').value);
+  if(!h) return;
+  const urlEl=document.getElementById('f_url');
+  let msg='';
+  if(h.url && !urlEl.value.trim()){ urlEl.value=h.url; msg='前回の発注先URLを自動入力しました'; }
+  if(h.vendor) msg=(msg?msg+'／':'')+('前回の発注先：'+h.vendor);
+  if(msg && hint){ hint.textContent='💡 '+msg+'（手修正できます）'; hint.style.display=''; }
+}
+/* 起動時とdest切替時に、オートフィル用の履歴を裏で読み込んでおく（setDestのelseから呼ばれる） */
+async function loadRowsForAutofill(){ try{ rows = await apiLoad(); }catch(e){} }
 
 function showTab(t){
   document.getElementById('tabReq').classList.toggle('active', t==='req');
@@ -381,7 +406,11 @@ function fmtDate(v){ if(!v) return ''; const s=String(v); if(s.indexOf('T')>=0){
 
 function openOrder(id){
   const r=rows.find(x=>String(x.id)===String(id)); if(!r)return; editId=id;
-  document.getElementById('m_vendor').value=r.vendor||'';
+  const hint=document.getElementById('m_vendorHint'); if(hint){ hint.style.display='none'; hint.textContent=''; }
+  let vendor=r.vendor||'';
+  // 発注先が未入力なら、同じ品目で前回使った発注先を自動入力（手修正できる）
+  if(!vendor){ const h=historyForItem(r.item); if(h && h.vendor){ vendor=h.vendor; if(hint){ hint.textContent='💡 前回の発注先を自動入力しました（手修正できます）'; hint.style.display=''; } } }
+  document.getElementById('m_vendor').value=vendor;
   document.getElementById('m_amount').value=r.amount||'';
   document.getElementById('m_orderdate').value=(r.orderdate&&/^\d{4}-\d{2}-\d{2}/.test(r.orderdate))?r.orderdate.slice(0,10):todayStr();
   document.getElementById('m_orderer').value=r.orderer||ME_NAME||'';
