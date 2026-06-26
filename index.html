@@ -138,8 +138,8 @@
   <div class="modal">
     <h3>発注処理（発注者が記入）</h3>
     <div class="grid">
-      <div class="full"><label>発注先</label><input id="m_vendor" placeholder="例：アスクル"><div id="m_vendorHint" style="font-size:11.5px;color:#15803D;font-weight:700;margin-top:4px;display:none"></div></div>
-      <div><label>発注金額（円）</label><input id="m_amount" type="number" min="0"></div>
+      <div class="full"><label>発注先</label><input id="m_vendor" placeholder="例：アスクル"><div id="m_vendorHint" style="font-size:11.5px;color:#15803D;font-weight:700;margin-top:4px;display:none"></div><div id="m_urlLink" style="font-size:12.5px;font-weight:700;margin-top:6px;display:none"></div></div>
+      <div><label>発注金額（円）</label><input id="m_amount" type="number" min="0"><div id="m_amountHint" style="font-size:11.5px;color:#6b7a86;font-weight:700;margin-top:4px;display:none"></div></div>
       <div><label>発注日</label><input id="m_orderdate" type="date"></div>
       <div class="full"><label>発注者</label><input id="m_orderer"></div>
     </div>
@@ -153,7 +153,7 @@
 <div class="toast" id="toast"></div>
 
 <!-- バージョンバッジ（右下・タップで更新履歴） -->
-<div id="appVerBadge" onclick="alert('備品発注 更新履歴\n\nv1.7（2026/6/26）\n・受取者・延長を備考ではなく専用項目に表示（シートの受取者・延長列に対応）。\n\nv1.6（2026/6/26）\n・備考に貼られたURL（ダンボールワン等）をクリックで開けるようリンク化しました。\n\nv1.5（2026/6/19）\n・発注先の履歴オートフィル：発注処理を開いたとき、同じ品目で前回使った「発注先」を自動入力（手修正できます）。依頼フォームでも品目を入れると前回の参考URLを自動入力。\n\nv1.4（2026/6/15）\n・「GF（古着）」→「GOODFLAT」に名称変更\n・メインタブ＆依頼ボタンの色を選択中の事業部カラー（ANEW=緑／GOODFLAT=紺／フロンティア=橙）に連動\n・発注状況・到着済みの明細に「依頼日」を追加\n・発注状況に「今月の発注金額（選択中事業部の合計）」を表示\n\nv1.3（2026/6/15）\n・「振込元（口座）区分」→「依頼元（口座）区分」に表記変更\n・ボタンの色を選択中の事業部カラー（ANEW=緑／GF=紺／フロンティア=橙）に連動\n・到着済み以外の備品すべてに「受け取りました（到着済へ）」ボタンを表示（歯抜け解消）\n\nv1.2（2026/6/14）\n・ANEWアプリの「到着待ちアラート」から、該当の品目に一発でジャンプ→その場で「受け取りました」を押せるように（発注状況タブを自動で開き、品目をハイライト）\n\nv1.1（2026/6/14）\n・口座区分（ANEW／GF／フロンティア）を横ボタンからプルダウン選択に変更\n・発注状況に「並び替え（状態順／新しい順／古い順）」を追加\n・状態でボタンの色を区別（発注処理＝オレンジ／受け取り＝ブルー）\n・依頼のままでも「受け取りました（到着済へ）」で移動できるように\n・到着済みに「受取者」を表示\n\nv1.0\n・備品発注の公開（依頼／発注状況／到着済み）')" style="position:fixed;right:10px;bottom:10px;z-index:60;background:rgba(31,45,40,.82);color:#fff;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;cursor:pointer;font-family:inherit;user-select:none;">v1.7</div>
+<div id="appVerBadge" onclick="alert('備品発注 更新履歴\n\nv1.8（2026/6/26）\n・発注処理（発注者が記入）の画面で、参考URL（発注先ページ）をクリックで開けるように＋発注金額の下に『前回の金額』を表示。\n\nv1.7（2026/6/26）\n・受取者・延長を備考ではなく専用項目に表示（シートの受取者・延長列に対応）。\n\nv1.6（2026/6/26）\n・備考に貼られたURL（ダンボールワン等）をクリックで開けるようリンク化しました。\n\nv1.5（2026/6/19）\n・発注先の履歴オートフィル：発注処理を開いたとき、同じ品目で前回使った「発注先」を自動入力（手修正できます）。依頼フォームでも品目を入れると前回の参考URLを自動入力。\n\nv1.4（2026/6/15）\n・「GF（古着）」→「GOODFLAT」に名称変更\n・メインタブ＆依頼ボタンの色を選択中の事業部カラー（ANEW=緑／GOODFLAT=紺／フロンティア=橙）に連動\n・発注状況・到着済みの明細に「依頼日」を追加\n・発注状況に「今月の発注金額（選択中事業部の合計）」を表示\n\nv1.3（2026/6/15）\n・「振込元（口座）区分」→「依頼元（口座）区分」に表記変更\n・ボタンの色を選択中の事業部カラー（ANEW=緑／GF=紺／フロンティア=橙）に連動\n・到着済み以外の備品すべてに「受け取りました（到着済へ）」ボタンを表示（歯抜け解消）\n\nv1.2（2026/6/14）\n・ANEWアプリの「到着待ちアラート」から、該当の品目に一発でジャンプ→その場で「受け取りました」を押せるように（発注状況タブを自動で開き、品目をハイライト）\n\nv1.1（2026/6/14）\n・口座区分（ANEW／GF／フロンティア）を横ボタンからプルダウン選択に変更\n・発注状況に「並び替え（状態順／新しい順／古い順）」を追加\n・状態でボタンの色を区別（発注処理＝オレンジ／受け取り＝ブルー）\n・依頼のままでも「受け取りました（到着済へ）」で移動できるように\n・到着済みに「受取者」を表示\n\nv1.0\n・備品発注の公開（依頼／発注状況／到着済み）')" style="position:fixed;right:10px;bottom:10px;z-index:60;background:rgba(31,45,40,.82);color:#fff;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;cursor:pointer;font-family:inherit;user-select:none;">v1.8</div>
 
 <script>
 /* ====== 設定 ====== */
@@ -199,12 +199,13 @@ function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 function normItem(s){ return String(s==null?'':s).trim().toLowerCase().replace(/\s+/g,''); }
 function historyForItem(item){
   const key=normItem(item); if(!key) return null;
-  const cands = rows.filter(r=> normItem(r.item)===key && (r.vendor || r.url));
+  const cands = rows.filter(r=> normItem(r.item)===key && (r.vendor || r.url || Number(r.amount)>0));
   if(!cands.length) return null;
   cands.sort((a,b)=> String(b.orderdate||b.reqdate||'').localeCompare(String(a.orderdate||a.reqdate||''))); // 新しい順
   const v=(cands.find(r=>r.vendor)||{}).vendor||'';
   const u=(cands.find(r=>r.url)||{}).url||'';
-  return (v||u)?{ vendor:v, url:u }:null;
+  const a=(cands.find(r=>Number(r.amount)>0)||{}).amount||''; // 前回の発注金額
+  return (v||u||a)?{ vendor:v, url:u, amount:a }:null;
 }
 /* 依頼フォームで品目を入れたら、前回の参考URL（発注先のページ）を自動入力 */
 function onItemChange(){
@@ -418,6 +419,15 @@ function openOrder(id){
   document.getElementById('m_amount').value=r.amount||'';
   document.getElementById('m_orderdate').value=(r.orderdate&&/^\d{4}-\d{2}-\d{2}/.test(r.orderdate))?r.orderdate.slice(0,10):todayStr();
   document.getElementById('m_orderer').value=r.orderer||ME_NAME||'';
+  // 参考URL（発注先のページ）をクリックで開けるように表示。この品目にURLが無ければ前回のURLを使う。
+  const hist=historyForItem(r.item);
+  const url=(r.url||'').trim() || (hist&&hist.url) || '';
+  const urlBox=document.getElementById('m_urlLink');
+  if(urlBox){ if(url){ urlBox.innerHTML='🔗 <a href="'+esc(url)+'" target="_blank" rel="noopener" style="color:#2563EB;text-decoration:underline;word-break:break-all">発注先ページを開く（参考URL）</a>'; urlBox.style.display=''; } else { urlBox.style.display='none'; urlBox.innerHTML=''; } }
+  // 前回の発注金額を入力欄の下に表示（参考）。
+  const ah=document.getElementById('m_amountHint');
+  const prevAmt=(hist&&hist.amount)?hist.amount:'';
+  if(ah){ if(Number(prevAmt)>0){ ah.textContent='前回の金額：¥'+Number(prevAmt).toLocaleString(); ah.style.display=''; } else { ah.style.display='none'; ah.textContent=''; } }
   document.getElementById('ov').classList.add('show');
 }
 function closeModal(){ document.getElementById('ov').classList.remove('show'); editId=null; }
