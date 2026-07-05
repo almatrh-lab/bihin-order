@@ -111,6 +111,7 @@
         <div><label>1ロット金額（円）</label><input id="f_lotprice" type="number" min="0" placeholder="例：1200"></div>
         <div><label>希望ロット数</label><input id="f_lotqty" type="number" min="0" placeholder="例：3"></div>
         <div><label>参考URL</label><input id="f_url" placeholder="https://..."></div>
+        <div id="f_deliveryWrap" style="display:none"><label>納品先</label><input id="f_delivery" placeholder="例：雀宮倉庫 / 店舗"></div>
         <div class="full"><label>備考</label><textarea id="f_note" placeholder="補足があれば入力"></textarea></div>
       </div>
       <div class="actions">
@@ -153,7 +154,7 @@
 <div class="toast" id="toast"></div>
 
 <!-- バージョンバッジ（右下・タップで更新履歴） -->
-<div id="appVerBadge" onclick="alert('備品発注 更新履歴\n\nv1.9（2026/7/5）\n・発注状況・到着済みの見出しを「品目 サイズ / カラー」まで表示（例：ダンボール 70サイズ（ヨコ型） / -）。品目だけだと同名の備品が区別できなかったのを解消。\n\nv1.8（2026/6/26）\n・発注処理（発注者が記入）の画面で、参考URL（発注先ページ）をクリックで開けるように＋発注金額の下に『前回の金額』を表示。\n\nv1.7（2026/6/26）\n・受取者・延長を備考ではなく専用項目に表示（シートの受取者・延長列に対応）。\n\nv1.6（2026/6/26）\n・備考に貼られたURL（ダンボールワン等）をクリックで開けるようリンク化しました。\n\nv1.5（2026/6/19）\n・発注先の履歴オートフィル：発注処理を開いたとき、同じ品目で前回使った「発注先」を自動入力（手修正できます）。依頼フォームでも品目を入れると前回の参考URLを自動入力。\n\nv1.4（2026/6/15）\n・「GF（古着）」→「GOODFLAT」に名称変更\n・メインタブ＆依頼ボタンの色を選択中の事業部カラー（ANEW=緑／GOODFLAT=紺／フロンティア=橙）に連動\n・発注状況・到着済みの明細に「依頼日」を追加\n・発注状況に「今月の発注金額（選択中事業部の合計）」を表示\n\nv1.3（2026/6/15）\n・「振込元（口座）区分」→「依頼元（口座）区分」に表記変更\n・ボタンの色を選択中の事業部カラー（ANEW=緑／GF=紺／フロンティア=橙）に連動\n・到着済み以外の備品すべてに「受け取りました（到着済へ）」ボタンを表示（歯抜け解消）\n\nv1.2（2026/6/14）\n・ANEWアプリの「到着待ちアラート」から、該当の品目に一発でジャンプ→その場で「受け取りました」を押せるように（発注状況タブを自動で開き、品目をハイライト）\n\nv1.1（2026/6/14）\n・口座区分（ANEW／GF／フロンティア）を横ボタンからプルダウン選択に変更\n・発注状況に「並び替え（状態順／新しい順／古い順）」を追加\n・状態でボタンの色を区別（発注処理＝オレンジ／受け取り＝ブルー）\n・依頼のままでも「受け取りました（到着済へ）」で移動できるように\n・到着済みに「受取者」を表示\n\nv1.0\n・備品発注の公開（依頼／発注状況／到着済み）')" style="position:fixed;right:10px;bottom:10px;z-index:60;background:rgba(31,45,40,.82);color:#fff;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;cursor:pointer;font-family:inherit;user-select:none;">v1.9</div>
+<div id="appVerBadge" onclick="alert('備品発注 更新履歴\n\nv1.10（2026/7/5）\n・GOODFLATに「納品先」を追加：依頼フォーム（GF選択時のみ表示）で入力でき、発注状況・到着済みにも表示。シートはGFタブのR列（納品先）に対応。※シートへの書き込み反映にはGAS更新が必要。\n\nv1.9（2026/7/5）\n・発注状況・到着済みの見出しを「品目 サイズ / カラー」まで表示（例：ダンボール 70サイズ（ヨコ型） / -）。品目だけだと同名の備品が区別できなかったのを解消。\n\nv1.8（2026/6/26）\n・発注処理（発注者が記入）の画面で、参考URL（発注先ページ）をクリックで開けるように＋発注金額の下に『前回の金額』を表示。\n\nv1.7（2026/6/26）\n・受取者・延長を備考ではなく専用項目に表示（シートの受取者・延長列に対応）。\n\nv1.6（2026/6/26）\n・備考に貼られたURL（ダンボールワン等）をクリックで開けるようリンク化しました。\n\nv1.5（2026/6/19）\n・発注先の履歴オートフィル：発注処理を開いたとき、同じ品目で前回使った「発注先」を自動入力（手修正できます）。依頼フォームでも品目を入れると前回の参考URLを自動入力。\n\nv1.4（2026/6/15）\n・「GF（古着）」→「GOODFLAT」に名称変更\n・メインタブ＆依頼ボタンの色を選択中の事業部カラー（ANEW=緑／GOODFLAT=紺／フロンティア=橙）に連動\n・発注状況・到着済みの明細に「依頼日」を追加\n・発注状況に「今月の発注金額（選択中事業部の合計）」を表示\n\nv1.3（2026/6/15）\n・「振込元（口座）区分」→「依頼元（口座）区分」に表記変更\n・ボタンの色を選択中の事業部カラー（ANEW=緑／GF=紺／フロンティア=橙）に連動\n・到着済み以外の備品すべてに「受け取りました（到着済へ）」ボタンを表示（歯抜け解消）\n\nv1.2（2026/6/14）\n・ANEWアプリの「到着待ちアラート」から、該当の品目に一発でジャンプ→その場で「受け取りました」を押せるように（発注状況タブを自動で開き、品目をハイライト）\n\nv1.1（2026/6/14）\n・口座区分（ANEW／GF／フロンティア）を横ボタンからプルダウン選択に変更\n・発注状況に「並び替え（状態順／新しい順／古い順）」を追加\n・状態でボタンの色を区別（発注処理＝オレンジ／受け取り＝ブルー）\n・依頼のままでも「受け取りました（到着済へ）」で移動できるように\n・到着済みに「受取者」を表示\n\nv1.0\n・備品発注の公開（依頼／発注状況／到着済み）')" style="position:fixed;right:10px;bottom:10px;z-index:60;background:rgba(31,45,40,.82);color:#fff;font-size:11px;font-weight:800;padding:5px 10px;border-radius:999px;cursor:pointer;font-family:inherit;user-select:none;">v1.10</div>
 
 <script>
 /* ====== 設定 ====== */
@@ -188,6 +189,9 @@ function setDest(d){
   document.documentElement.style.setProperty('--dest', dc);
   const sel=document.getElementById('destSel');
   if(sel){ if(sel.value!==d) sel.value=d; sel.style.borderColor=dc; sel.style.color=dc; sel.style.boxShadow='0 0 0 2px '+dc+'22'; }
+  // 納品先はGFだけの項目（GFタブのR列）。GF以外では入力欄を隠す
+  const dw=document.getElementById('f_deliveryWrap');
+  if(dw) dw.style.display = (d==='gf') ? '' : 'none';
   const lv=document.getElementById('paneList').style.display!=='none';
   const av=document.getElementById('paneArrived').style.display!=='none';
   if(lv||av) refresh(); else loadRowsForAutofill();
@@ -242,7 +246,7 @@ async function apiPost(body){
 }
 
 function clearForm(){
-  ['f_item','f_code','f_size','f_color','f_lot','f_lotprice','f_lotqty','f_url','f_note'].forEach(id=>document.getElementById(id).value='');
+  ['f_item','f_code','f_size','f_color','f_lot','f_lotprice','f_lotqty','f_url','f_note','f_delivery'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f_reqdate').value = todayStr();
 }
 
@@ -263,7 +267,8 @@ async function submitReq(){
     lotqty:document.getElementById('f_lotqty').value,
     requester:ME_NAME||'ゲスト',
     note:document.getElementById('f_note').value.trim(),
-    url:document.getElementById('f_url').value.trim()
+    url:document.getElementById('f_url').value.trim(),
+    delivery:(dest==='gf'?document.getElementById('f_delivery').value.trim():'')  // 納品先（GFのみ・シートR列）
   };
   await apiPost(body);
   btn.disabled=false; clearForm(); toast('「'+DESTNAME[dest]+'」に発注を依頼しました！');
@@ -341,6 +346,7 @@ function renderList(){
         <b>品番/JAN</b><span>${esc(r.code||'-')}</span>
         <b>サイズ/カラー</b><span>${esc(r.size||'-')} / ${esc(r.color||'-')}</span>
         <b>ロット</b><span>${esc(r.lot||'-')}入 × 希望${esc(r.lotqty||'-')}ロット（1ロット ${r.lotprice?Number(r.lotprice).toLocaleString()+'円':'-'}）　${estAmount(r)}</span>
+        ${r.delivery?`<b>納品先</b><span style="font-weight:800">${esc(r.delivery)}</span>`:''}
         ${r.vendor?`<b>発注先</b><span>${esc(r.vendor)}</span>`:''}
         ${r.url?`<b>URL</b><span><a href="${esc(r.url)}" target="_blank" rel="noopener">リンク</a></span>`:''}
         ${r.amount?`<b>発注金額</b><span>${Number(r.amount).toLocaleString()}円</span>`:''}
@@ -384,6 +390,7 @@ function renderArrived(){
         <b>品番/JAN</b><span>${esc(r.code||'-')}</span>
         <b>サイズ/カラー</b><span>${esc(r.size||'-')} / ${esc(r.color||'-')}</span>
         <b>ロット</b><span>${esc(r.lot||'-')}入 × ${esc(r.lotqty||'-')}ロット（1ロット ${r.lotprice?Number(r.lotprice).toLocaleString()+'円':'-'}）</span>
+        ${r.delivery?`<b>納品先</b><span style="font-weight:800">${esc(r.delivery)}</span>`:''}
         ${r.vendor?`<b>発注先</b><span>${esc(r.vendor)}</span>`:''}
         ${r.amount?`<b>発注金額</b><span>${Number(r.amount).toLocaleString()}円</span>`:''}
         ${r.url?`<b>URL</b><span><a href="${esc(r.url)}" target="_blank" rel="noopener">リンク</a></span>`:''}
@@ -399,7 +406,7 @@ function copyToForm(id){
   const set=(k,v)=>document.getElementById(k).value=(v==null?'':v);
   set('f_item',r.item); set('f_code',r.code); set('f_size',r.size); set('f_color',r.color);
   set('f_lot',r.lot); set('f_lotprice',r.lotprice); set('f_lotqty',r.lotqty);
-  set('f_url',r.url); set('f_note',r.note);
+  set('f_url',r.url); set('f_note',r.note); set('f_delivery',r.delivery||'');
   document.getElementById('f_reqdate').value=todayStr();
   showTab('req');
   window.scrollTo({top:0,behavior:'smooth'});
